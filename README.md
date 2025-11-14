@@ -476,3 +476,86 @@ la fonction ApplyGeneration(CancellationToken cancellationToken) Remplit la gril
                     AddTileToCell(chosenCell, WATER_TILE_NAME, true);
             }
         }
+
+
+
+par la suite on a fait un derniere exercice celui de creer un alghoritme noise
+
+
+
+using Components.ProceduralGeneration;
+using Cysharp.Threading.Tasks;
+using System.Threading;
+using UnityEngine;
+
+[CreateAssetMenu(menuName = "Procedural Generation Method/Noise Generator")]
+public class NoiseGenerator : ProceduralGenerationMethod
+{
+    [Header("LAYER")]
+    [Range(-1f, 1f)] public float highWater;
+    [Range(-1f, 1f)] public float highSand;
+    [Range(-1f, 1f)] public float highGrass;
+    [Range(-1f, 1f)] public float highRock;
+
+    [Header("NOISE PARAMETER")]
+    [Range(0, 1f)] public float frequency;
+
+    protected override async UniTask ApplyGeneration(CancellationToken cancellationToken)
+    {
+
+        FastNoiseLite noise = new FastNoiseLite();
+        noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+
+        float[,] noiseData = new float[Grid.Width, Grid.Lenght];
+
+        noise.SetFrequency(frequency);
+        noise.SetSeed(RandomService.Seed);
+
+        for (int x = 0; x < Grid.Width; x++)
+        {
+            for (int y = 0; y < Grid.Lenght; y++)
+            {
+                noiseData[x, y] = noise.GetNoise(x, y);
+                if (!Grid.TryGetCellByCoordinates(x, y, out var cell))
+                    continue;
+                float high = noise.GetNoise(x, y);
+                bool hasplace = false;
+                if (high < highWater)
+                {
+                    AddTileToCell(cell, WATER_TILE_NAME, true);
+                    hasplace = true;
+                }
+                if (high < highSand && hasplace == false)
+                {
+                    AddTileToCell(cell, SAND_TILE_NAME, true);
+                    hasplace = true;
+                }
+                if (high < highGrass && hasplace == false)
+                {
+                    AddTileToCell(cell, GRASS_TILE_NAME, true);
+                    hasplace = true;
+                }
+                if (high < highRock && hasplace == false)
+                {
+                    AddTileToCell(cell, ROCK_TILE_NAME, true);
+                    hasplace = true;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+que fait le code ?
+
+il génère une carte procédurale à partir d'un bruit,  c'est une fonction mathematique qui produis des valeur dites "aleatoire" en fonction d'un bruit. Cela permet de créer des zones naturelles cohérentes comme : de l’eau, du sable, de l'herbe, de la roche
+
+
+la fonction ApplyGeneration(CancellationToken cancellationToken)  est la fonction principal qui genere la grid/map
+
+la fonction AddTileToCell(...) place un type de terrain dans une cellule (eau, sable, herbe, roche…)
+
+la fonction TryGetCellByCoordinates(...) tente de récupérer la cellule de la grid aux coordonnées données
+
